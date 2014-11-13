@@ -1,0 +1,14 @@
+<h1>Validacion</h1>
+  <% @productos_por_taxonomias.each do |clave , valores| %>
+    <h3>  
+      <%= clave%>
+    </h3>  
+    <ul>
+      <% valores.each do |valor| %>
+        <li>
+          <%= valor.variant.product.name %>
+        </li>
+      <% end %>    
+    </ul>
+  <% end %>
+<%= submit_tag t(:save_and_continue), :class => 'continue button primary' %>
