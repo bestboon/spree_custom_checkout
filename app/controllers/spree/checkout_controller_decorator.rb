@@ -18,9 +18,13 @@ module Spree
           end
 
           if @order.completed?
+            # Almacenamos la orden actual como la principal
             @main_order = @current_order
+            # Hacemos nula la orden actual
             @current_order = nil
+            # Generamos las ordenes nuevas por taxonomias y limite de lineas
             generate_orders
+            # Eliminamos la orden principal.
             delete_lines_main_order
             flash.notice = Spree.t(:order_processed_successfully)
             flash['order_completed'] = true
@@ -33,17 +37,23 @@ module Spree
         end
       end
 
+      # Metodo que se encarga de eliminar la orden principal y sus lineas
       def delete_lines_main_order
+        # Eliminamos las lineas de la orden principal
         @main_order.line_items.each do |line_item|
           line_item.delete
         end
+        # Eliminamos la orden principal
         @main_order.delete
       end
 
+      # Metodo que se encarga de dividir las ordenes por taxonomias.
       def split_order
         # Lineas de productos identificadas por taxonomias
         @taxonomias = Spree::Taxonomy.all
+        # Creamos el hash de array donde almacenaremos las lineas de productos por taxonomias.
         @productos_por_taxonomias =  Hash.new
+        # LLenamos el hash
         @taxonomias.each do |taxonomia|
           @productos_por_taxonomias[taxonomia.name] = []
         end
@@ -56,17 +66,23 @@ module Spree
         end
       end
 
+      # Metodo que se encarga de generar las nuevas ordenes partiendo de la principal
+      # tomando encuenta las taxonomias y el limite de lineas por factura configurado.
       def generate_orders
-        @productos_por_taxonomias.each do |clave, valor|
-          @current_order = nil
-          populator = Spree::OrderPopulator.new(current_order(create_order_if_necessary: true), current_currency)
-          valor.each do |item|
-            populator.populate(item.variant_id, item.quantity)
+        @productos_por_taxonomias.each do |taxonomia, line_items|
+          # TODO el valor de division de lineas debe venir dinamicamente desde las configuraciones.
+          line_items.each_slice(2) do |line_items_slice|
+            line_items_slice.each do |line_item|
+              @current_order = nil
+              populator = Spree::OrderPopulator.new(current_order(create_order_if_necessary: true), current_currency)
+              populator.populate(line_item.variant_id, line_item.quantity)
+            end
+          @current_order.next
+          @current_order.next
           end
-          @current_order.next
-          @current_order.next
         end
       end
+
     #fin controlador
     end
 # fin modulo

@@ -4,37 +4,43 @@
     <h3>
       <%= taxonomia %>
     </h3>
-    <table id="cart-detail" data-hook>
-      <thead>
-        <tr data-hook="cart_items_headers">
-          <th class="cart-item-description-header" colspan="2" ><%= Spree.t(:item) %></th>
-          <th class="cart-item-price-header" ><%= Spree.t(:price) %></th>
-          <th class="cart-item-quantity-header" ><%= Spree.t(:qty) %></th>
-          <th class="cart-item-total-header" ><%= Spree.t(:total) %></th>
-          <th class="cart-item-delete-header" ></th>
+    <!--  TODO El valor de division de las lineas de articulos de una taxonomia 
+          de una orden debe ser dinamico actualmente esta en "2" -->
+    <%= line_items.each_slice(2).with_index do |line_items_slice, i| %>
+      <h4>
+        <%= "Orden# #{i+1}" %>
+      </h4>
+      <table id="cart-detail" data-hook>
+        <thead>
+          <tr data-hook="cart_items_headers">
+            <th class="cart-item-description-header" colspan="2" ><%= Spree.t(:item) %></th>
+            <th class="cart-item-price-header" ><%= Spree.t(:price) %></th>
+            <th class="cart-item-quantity-header" ><%= Spree.t(:qty) %></th>
+            <th class="cart-item-total-header" ><%= Spree.t(:total) %></th>
+            <th class="cart-item-delete-header" ></th>
+          </tr>
+        </thead>
+        <tbody id="line_items" data-hook>
+          <%= render partial: 'spree/orders/line_item', collection: line_items_slice, locals: {order_form: order_form} %>
+        </tbody>
+        <% cantidad = 0 %>
+        <% total = 0 %>
+        <% line_items_slice.each do |line_item| %>
+          <% cantidad = cantidad + line_item.quantity %>
+          <% total = total + (line_item.quantity * line_item.price) %>
+        <% end %>
+        <tr class="cart-subtotal">
+          <td colspan="5" align='right'><h5><%= Spree.t(:cart_subtotal, :count => cantidad) %></h5></th>
+          <td colspan><h5><%= total %></h5></td>
+          <td></td>
         </tr>
-      </thead>
-      <tbody id="line_items" data-hook>
-        <%= render partial: 'spree/orders/line_item', collection: line_items, locals: {order_form: order_form} %>
-      </tbody>
-      <% cantidad = 0 %>
-      <% total = 0 %>
-      <% line_items.each do |line_item| %>
-        <% cantidad = cantidad + line_item.quantity %>
-        <% total = total + (line_item.quantity * line_item.price) %>
-      <% end %>
-      <tr class="cart-subtotal">
-        <td colspan="4" align='right'><h5><%= Spree.t(:cart_subtotal, :count => cantidad) %></h5></th>
-        <td colspan><h5><%= total %></h5></td>
-        <td></td>
-      </tr>
-      <tr class="cart-total">
-        <td colspan="4" align='right'><h5><%= Spree.t(:total) %></h5></th>
-        <td colspan><h5><%= "Bs #{total}" %></h5></td>
-        <td></td>
-      </tr>
-    </table>
+        <tr class="cart-total">
+          <td colspan="5" align='right'><h5><%= Spree.t(:total) %></h5></th>
+          <td colspan><h5><%= "Bs #{total}" %></h5></td>
+          <td></td>
+        </tr>
+      </table>
+    <% end %>
   <% end %>
 <% end %>
-
 <%= render :partial => 'spree/checkout/summary', :locals => { :order => @order } %>
