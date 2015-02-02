@@ -79,10 +79,12 @@ module Spree
             end
           @current_order.next
           @current_order.next
+          # Envio de correo si esta habilitada la opcion 'enable_mail_delivery'
+          # en las configuraciones de envio de correo en backend.
+          OrderMailer.confirm_email(@current_order).deliver if Spree::Config[:enable_mail_delivery]
           end
         end
       end
-
     #fin controlador
     end
 # fin modulo

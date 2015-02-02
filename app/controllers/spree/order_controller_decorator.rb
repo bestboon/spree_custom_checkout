@@ -7,6 +7,8 @@ module Spree
         split_order
       end
 
+      # Funcion que se encarga de dividir las ordenes para ser mostradas por taxonomias en la pantalla del
+      # carrito de compra.
       def split_order
         # Lineas de productos identificadas por taxonomias
         @taxonomias = Spree::Taxonomy.all
