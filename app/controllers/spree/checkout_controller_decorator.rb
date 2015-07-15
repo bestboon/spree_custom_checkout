@@ -5,8 +5,7 @@ module Spree
         # if the user has a default address, a callback takes care of setting
         # that; but if he doesn't, we need to build an empty one here
         @order.bill_address ||= Address.build_default
-        @order.ship_address ||= Address.build_default if @order.checkout_steps.include?('delivery')
-        split_order
+        @order.ship_address ||= Address.build_default if @order.checkout_steps.include?('delivery')      
       end
 
       def update
@@ -22,6 +21,8 @@ module Spree
             @main_order = @current_order
             # Hacemos nula la orden actual
             @current_order = nil
+            # Dividimos la orden por taxonomis y numero de lineas.
+            split_order
             # Generamos las ordenes nuevas por taxonomias y limite de lineas
             generate_orders
             # Eliminamos la orden principal.
@@ -50,7 +51,7 @@ module Spree
       # Metodo que se encarga de dividir las ordenes por taxonomias.
       def split_order
         # Lineas de productos identificadas por taxonomias
-        @taxonomias = Spree::Taxonomy.all
+        @taxonomias = Spree::Taxon.where(parent_id: [1])
         # Creamos el hash de array donde almacenaremos las lineas de productos por taxonomias.
         @productos_por_taxonomias =  Hash.new
         # LLenamos el hash
@@ -59,8 +60,8 @@ module Spree
         end
         @order.line_items.each do |item|
           item.variant.product.taxons.each do |taxon|
-            if @productos_por_taxonomias[taxon.name]
-              @productos_por_taxonomias[taxon.name].append(item)
+            if @productos_por_taxonomias[taxon.parent.name]
+              @productos_por_taxonomias[taxon.parent.name].append(item)
             end
           end
         end
@@ -70,13 +71,14 @@ module Spree
       # tomando encuenta las taxonomias y el limite de lineas por factura configurado.
       def generate_orders
         @productos_por_taxonomias.each do |taxonomia, line_items|
-          # TODO el valor de division de lineas debe venir dinamicamente desde las configuraciones.
-          line_items.each_slice(2) do |line_items_slice|
+          # Picamos la orden actual en sub-ordenes si la orden excede la cantidad de lineas configuradas en el backend par auna orden.
+          line_items.each_slice(Spree::Config[:max_order_lines]) do |line_items_slice|
             line_items_slice.each do |line_item|
               @current_order = nil
               populator = Spree::OrderPopulator.new(current_order(create_order_if_necessary: true), current_currency)
               populator.populate(line_item.variant_id, line_item.quantity)
             end
+          @current_order.next
           @current_order.next
           @current_order.next
           # Envio de correo si esta habilitada la opcion 'enable_mail_delivery'

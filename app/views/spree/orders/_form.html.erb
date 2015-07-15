@@ -6,7 +6,7 @@
     </h3>
     <!--  TODO El valor de division de las lineas de articulos de una taxonomia 
           de una orden debe ser dinamico actualmente esta en "2" -->
-    <%= line_items.each_slice(2).with_index do |line_items_slice, i| %>
+    <%= line_items.each_slice(Spree::Config[:max_order_lines]).with_index do |line_items_slice, i| %>
       <h4>
         <%= "Orden# #{i+1}" %>
       </h4>
